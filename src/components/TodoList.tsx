@@ -1,4 +1,5 @@
 import { useState, useEffect } from 'react';
+// import type { RefObject } from 'react';
 import { DndProvider, useDrag, useDrop } from 'react-dnd';
 import { HTML5Backend } from 'react-dnd-html5-backend';
 import type { TodoTypes } from '../todo';
@@ -55,9 +56,15 @@ const TodoItem: React.FC<TodoItemProps> = ({
         },
     });
 
+    // Merge drag and drop refs
+    const ref = (node: HTMLDivElement | null) => {
+        drag(node);
+        drop(node);
+    };
+
     return (
         <div
-            ref={(node) => drag(drop(node))}
+            ref={ref}
             className={`flex items-center gap-2 p-2 mb-2 border rounded ${
                 todo.completed ? 'bg-green-100' : todo.priority === 'high' ? 'bg-red-100' : 'bg-white'
             } ${isDragging ? 'opacity-50' : ''}`}
@@ -133,12 +140,10 @@ const TodoList = () => {
     const [filter, setFilter] = useState<'all' | 'completed' | 'incomplete'>('all');
     const [sortBy, setSortBy] = useState<'none' | 'priority' | 'dueDate'>('none');
 
-    // Update todos when local storage changes
     useEffect(() => {
         setTodos(TodoService.getTodos());
     }, []);
 
-    // Handle drag and drop
     const moveTodo = (fromIndex: number, toIndex: number) => {
         const updatedTodos = Array.from(todos);
         const [movedTodo] = updatedTodos.splice(fromIndex, 1);
@@ -147,7 +152,6 @@ const TodoList = () => {
         setTodos(updatedTodos);
     };
 
-    // Handle edit actions
     const handleEditStart = (id: number, text: string) => {
         setEditingTodoId(id);
         setEditedTodoText(text);
@@ -170,25 +174,21 @@ const TodoList = () => {
         }
     };
 
-    // Handle delete todo
     const handleDeleteTodo = (id: number) => {
         TodoService.deleteTodo(id);
         setTodos((prevTodos) => prevTodos.filter((todo) => todo.id !== id));
     };
 
-    // Toggle completed status
     const handleToggleCompleted = (id: number) => {
         const updatedTodo = TodoService.toggleCompleted(id);
         setTodos((prevTodos) => prevTodos.map((todo) => (todo.id === id ? updatedTodo : todo)));
     };
 
-    // Toggle starred status
     const handleToggleStarred = (id: number) => {
         const updatedTodo = TodoService.toggleStarred(id);
         setTodos((prevTodos) => prevTodos.map((todo) => (todo.id === id ? updatedTodo : todo)));
     };
 
-    // Filter and sort todos
     const filteredTodos = todos
         .filter((todo) =>
             todo.text.toLowerCase().includes(searchTerm.toLowerCase())
@@ -210,7 +210,6 @@ const TodoList = () => {
     return (
         <DndProvider backend={HTML5Backend}>
             <div className="p-4">
-                {/* Filters */}
                 <div className="mb-4 flex gap-2">
                     <input
                         type="text"
